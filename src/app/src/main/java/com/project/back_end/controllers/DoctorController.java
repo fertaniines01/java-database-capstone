@@ -1,14 +1,16 @@
-package com.project.back_end.controllers;
+package com.example.demo.controller;
 
-import com.project.back_end.models.Doctor;
-import com.project.back_end.services.DoctorService;
-import com.project.back_end.services.TokenService;
+import com.example.demo.model.Doctor;
+import com.example.demo.service.DoctorService;
+import com.example.demo.service.TokenService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/doctors")
@@ -31,17 +33,30 @@ public class DoctorController {
     }
 
     @GetMapping("/availability/{user}/{doctorId}/{date}/{token}")
-    public ResponseEntity<?> getDoctorAvailability(
+    public ResponseEntity<Map<String, Object>> getDoctorAvailability(
             @PathVariable String user,
             @PathVariable Long doctorId,
             @PathVariable String date,
             @PathVariable String token) {
-        
+
+        Map<String, Object> response = new HashMap<>();
+
+        // Validation du token
         if (!tokenService.validateToken(token)) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid Token");
+            response.put("status", "error");
+            response.put("message", "Invalid or expired token");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
         }
-        
+
+        // Récupération des disponibilités
         List<String> availabilities = doctorService.getDoctorAvailability(doctorId, date);
-        return ResponseEntity.ok(availabilities);
+
+        // Encapsulation structurée dans un Map
+        response.put("status", "success");
+        response.put("doctorId", doctorId);
+        response.put("date", date);
+        response.put("availabilities", availabilities);
+
+        return ResponseEntity.ok(response);
     }
 }
