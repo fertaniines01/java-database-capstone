@@ -2,26 +2,39 @@ package com.project.back_end.controllers;
 
 import com.project.back_end.models.Prescription;
 import com.project.back_end.services.PrescriptionService;
+import com.project.back_end.services.TokenService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 @RestController
-@RequestMapping("/api/prescriptions")
+@RequestMapping("/prescriptions")
 public class PrescriptionController {
 
     @Autowired
     private PrescriptionService prescriptionService;
 
-    @GetMapping("/patient/{patientId}")
-    public ResponseEntity<List<Prescription>> getPrescriptionsByPatient(@PathVariable Long patientId) {
-        return ResponseEntity.ok(prescriptionService.getByPatientId(patientId));
-    }
+    @Autowired
+    private TokenService tokenService;
 
-    @PostMapping
-    public ResponseEntity<Prescription> createPrescription(@RequestBody Prescription prescription) {
-        return ResponseEntity.ok(prescriptionService.savePrescription(prescription));
+    @PostMapping("/add/{token}")
+    public ResponseEntity<Map<String, String>> createPrescription(
+            @PathVariable String token, 
+            @RequestBody Prescription prescription) {
+        
+        Map<String, String> response = new HashMap<>();
+        
+        if (!tokenService.validateToken(token)) {
+            response.put("error", "Unauthorized access - Invalid Token");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+        }
+        
+        prescriptionService.savePrescription(prescription);
+        response.put("message", "Prescription created successfully");
+        return ResponseEntity.ok(response);
     }
 }
