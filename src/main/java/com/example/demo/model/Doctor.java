@@ -1,71 +1,85 @@
-package com.project.back_end.services;
+package com.example.demo.model;
 
-import com.project.back_end.models.Doctor;
-import com.project.back_end.repo.DoctorRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
-import java.util.Collections;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
-/**
- * Service class for managing Doctor operations and credentials validation.
- */
-@Service
-public class DoctorService {
+@Entity
+@Table(name = "doctors")
+public class Doctor {
 
-    @Autowired
-    private DoctorRepository doctorRepository;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-    /**
-     * Retrieves all doctors.
-     */
-    public List<Doctor> getAllDoctors() {
-        return doctorRepository.findAll();
+    @NotBlank(message = "Doctor name is required")
+    @Column(nullable = false)
+    private String name;
+
+    @NotBlank(message = "Specialty is required")
+    @Column(nullable = false)
+    private String specialty;
+
+    @NotBlank(message = "Email is required")
+    @Email(message = "Invalid email format")
+    @Column(nullable = false, unique = true)
+    private String email;
+
+    @ElementCollection
+    @CollectionTable(name = "doctor_availabilities", joinColumns = @JoinColumn(name = "doctor_id"))
+    @Column(name = "availability_slot")
+    private List<String> availabilities = new ArrayList<>();
+
+    // Constructeurs
+    public Doctor() {}
+
+    public Doctor(String name, String specialty, String email, List<String> availabilities) {
+        this.name = name;
+        this.specialty = specialty;
+        this.email = email;
+        this.availabilities = availabilities;
     }
 
-    /**
-     * Saves a new doctor.
-     */
-    public Doctor saveDoctor(Doctor doctor) {
-        return doctorRepository.save(doctor);
-    }
+    // Getters et Setters
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
 
-    /**
-     * Retrieves doctor availability filtered by a specific date.
-     * 
-     * @param doctorId The doctor's ID.
-     * @param date The date to filter availabilities (format: YYYY-MM-DD).
-     * @return List of availability slots matching the given date.
-     */
-    public List<String> getDoctorAvailability(Long doctorId, String date) {
-        Doctor doctor = doctorRepository.findById(doctorId).orElse(null);
-        if (doctor == null || doctor.getAvailabilities() == null) {
-            return Collections.emptyList();
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+
+    public String getSpecialty() { return specialty; }
+    public void setSpecialty(String specialty) { this.specialty = specialty; }
+
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
+
+    public List<String> getAvailabilities() { return availabilities; }
+    public void setAvailabilities(List<String> availabilities) { this.availabilities = availabilities; }
+
+    // Méthodes utilitaires pour enrichir la classe
+    public void addAvailability(String slot) {
+        if (this.availabilities == null) {
+            this.availabilities = new ArrayList<>();
         }
-
-        // Filtrage des créneaux contenant la date spécifiée
-        return doctor.getAvailabilities().stream()
-                .filter(slot -> slot.startsWith(date) || slot.contains(date))
-                .collect(Collectors.toList());
+        this.availabilities.add(slot);
     }
 
-    /**
-     * Validates doctor login credentials securely by checking both email and password.
-     * 
-     * @param email Doctor's email.
-     * @param password Doctor's password.
-     * @return true if credentials match, false otherwise.
-     */
-    public boolean validateCredentials(String email, String password) {
-        if (email == null || password == null) {
-            return false;
+    public void removeAvailability(String slot) {
+        if (this.availabilities != null) {
+            this.availabilities.remove(slot);
         }
-        
-        Doctor doctor = doctorRepository.findByEmail(email);
-        
-        // Vérification de l'existence ET de la correspondance exacte du mot de passe
-        return doctor != null && password.equals(doctor.getPassword());
+    }
+
+    @Override
+    public String toString() {
+        return "Doctor{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", specialty='" + specialty + '\'' +
+                ", email='" + email + '\'' +
+                ", availabilities=" + availabilities +
+                '}';
     }
 }
