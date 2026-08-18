@@ -1,14 +1,12 @@
-# Étape 1 : Image de base Java
-FROM openjdk:17-jdk-slim
-
-# Répertoire de travail dans le conteneur
+# Phase 1 : Build Maven
+FROM maven:3.8.5-openjdk-17 AS build
 WORKDIR /app
+COPY . .
+RUN mvn clean package -DskipTests
 
-# Copie du fichier JAR compilé
-COPY target/*.jar app.jar
-
-# Port d'exposition de l'application
+# Phase 2 : Exécution
+FROM openjdk:17-jdk-slim
+WORKDIR /app
+COPY --from=build /app/target/*.jar app.jar
 EXPOSE 8080
-
-# Commande de lancement
 ENTRYPOINT ["java", "-jar", "app.jar"]
