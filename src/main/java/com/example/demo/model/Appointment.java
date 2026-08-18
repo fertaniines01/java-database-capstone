@@ -1,50 +1,40 @@
-package com.example.demo.model;
+package com.example.demo.service;
 
-import jakarta.persistence.*;
-import jakarta.validation.constraints.Future;
-import jakarta.validation.constraints.NotNull;
+import com.example.demo.model.Appointment;
+import com.example.demo.repository.AppointmentRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.List;
 
-@Entity
-@Table(name = "appointments")
-public class Appointment {
+@Service
+public class AppointmentService {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Autowired
+    private AppointmentRepository appointmentRepository;
 
-    @NotNull(message = "La date du rendez-vous est obligatoire")
-    @Future(message = "La date du rendez-vous doit être dans le futur")
-    private LocalDateTime appointmentTime;
-
-    @ManyToOne
-    @JoinColumn(name = "doctor_id", nullable = false)
-    private Doctor doctor;
-
-    @ManyToOne
-    @JoinColumn(name = "patient_id", nullable = false)
-    private Patient patient;
-
-    private String status;
-
-    public Appointment() {}
-
-    public String getFormattedDisplay() {
-        return "Rendez-vous le " + appointmentTime.toString() + " avec Dr. " + (doctor != null ? doctor.getName() : "");
+    // Enregistre un nouveau rendez-vous
+    public Appointment bookAppointment(Appointment appointment) {
+        return appointmentRepository.save(appointment);
     }
 
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    // Récupère les rendez-vous par patient
+    public List<Appointment> getAppointmentsByPatient(Long patientId) {
+        return appointmentRepository.findByPatientId(patientId);
+    }
 
-    public LocalDateTime getAppointmentTime() { return appointmentTime; }
-    public void setAppointmentTime(LocalDateTime appointmentTime) { this.appointmentTime = appointmentTime; }
+    // Récupère tous les rendez-vous par médecin
+    public List<Appointment> getAppointmentsByDoctor(Long doctorId) {
+        return appointmentRepository.findByDoctorId(doctorId);
+    }
 
-    public Doctor getDoctor() { return doctor; }
-    public void setDoctor(Doctor doctor) { this.doctor = doctor; }
-
-    public Patient getPatient() { return patient; }
-    public void setPatient(Patient patient) { this.patient = patient; }
-
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
+    // Méthode ajoutée pour la validation (Médecin + Date spécifique)
+    public List<Appointment> getAppointmentsByDoctorAndDate(Long doctorId, LocalDate date) {
+        LocalDateTime startOfDay = date.atStartOfDay();
+        LocalDateTime endOfDay = date.atTime(LocalTime.MAX);
+        return appointmentRepository.findByDoctorIdAndAppointmentTimeBetween(doctorId, startOfDay, endOfDay);
+    }
 }
