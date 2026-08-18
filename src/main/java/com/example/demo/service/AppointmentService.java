@@ -1,12 +1,27 @@
-package com.example.demo.service;
+package com.project.back_end.services;
 
-import com.example.demo.dto.AppointmentDTO;
+import com.project.back_end.models.Appointment;
+import com.project.back_end.repo.AppointmentRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
 import java.util.List;
 
-public interface AppointmentService {
-    AppointmentDTO createAppointment(AppointmentDTO dto);
-    List<AppointmentDTO> getAllAppointments();
-    AppointmentDTO getAppointmentById(Long id);
-    AppointmentDTO updateAppointment(Long id, AppointmentDTO dto);
-    void deleteAppointment(Long id);
+@Service
+public class AppointmentService {
+
+    @Autowired
+    private AppointmentRepository appointmentRepository;
+
+    public Appointment bookAppointment(Appointment appointment) {
+        return appointmentRepository.save(appointment);
+    }
+
+    public List<Appointment> getAppointmentsByPatient(Long patientId) {
+        return appointmentRepository.findByPatientId(patientId);
+    }
+
+    public List<Appointment> getAppointmentsByDoctor(Long doctorId) {
+        return appointmentRepository.findByDoctorId(doctorId);
+    }
 }
