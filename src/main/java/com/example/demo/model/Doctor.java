@@ -3,7 +3,7 @@ package com.example.demo.model;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -14,26 +14,35 @@ public class Doctor {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotBlank(message = "Le nom est obligatoire")
+    @NotBlank(message = "Doctor name is required")
+    @Column(nullable = false)
     private String name;
 
-    @NotBlank(message = "La spécialité est obligatoire")
+    @NotBlank(message = "Specialty is required")
+    @Column(nullable = false)
     private String specialty;
 
-    @Email(message = "L'email doit être valide")
-    @NotBlank
+    @NotBlank(message = "Email is required")
+    @Email(message = "Invalid email format")
+    @Column(nullable = false, unique = true)
     private String email;
-
-    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
-    private String password;
 
     @ElementCollection
     @CollectionTable(name = "doctor_availabilities", joinColumns = @JoinColumn(name = "doctor_id"))
     @Column(name = "availability_slot")
-    private List<String> availabilities;
+    private List<String> availabilities = new ArrayList<>();
 
+    // Constructeurs
     public Doctor() {}
 
+    public Doctor(String name, String specialty, String email, List<String> availabilities) {
+        this.name = name;
+        this.specialty = specialty;
+        this.email = email;
+        this.availabilities = availabilities;
+    }
+
+    // Getters et Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -46,9 +55,31 @@ public class Doctor {
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
 
-    public String getPassword() { return password; }
-    public void setPassword(String password) { this.password = password; }
-
     public List<String> getAvailabilities() { return availabilities; }
     public void setAvailabilities(List<String> availabilities) { this.availabilities = availabilities; }
+
+    // Méthodes utilitaires pour enrichir la classe
+    public void addAvailability(String slot) {
+        if (this.availabilities == null) {
+            this.availabilities = new ArrayList<>();
+        }
+        this.availabilities.add(slot);
+    }
+
+    public void removeAvailability(String slot) {
+        if (this.availabilities != null) {
+            this.availabilities.remove(slot);
+        }
+    }
+
+    @Override
+    public String toString() {
+        return "Doctor{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", specialty='" + specialty + '\'' +
+                ", email='" + email + '\'' +
+                ", availabilities=" + availabilities +
+                '}';
+    }
 }
